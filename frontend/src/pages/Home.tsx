@@ -14,8 +14,23 @@ const Home = () => {
             <div className="flex overflow-auto">
               {
                 albums?.map((e,i)=>{
-                  return <AlbumCard key={i} image={e.thumbnail} name={e.title} desc={e.description} id={e.id}/>
-                })
+
+                  console.log(`Album index ${i}:`, {
+                    name: e.title,
+                    id: e.id,
+                    fullObject: e,
+                  });
+
+                  return (
+                    <AlbumCard
+                      key={i}
+                      image={e.thumbnail}
+                      name={e.title}
+                      desc={e.description}
+                      id={e.id}
+                    />
+                  );
+                 })
               }
             </div>
           </div>

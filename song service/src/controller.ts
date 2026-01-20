@@ -50,7 +50,7 @@ export const getAllsongs = TryCatch(async (req, res) => {
       songs = await sql`SELECT * FROM songs`;
 
       if (redisClient.isReady) {
-        await redisClient.set("albums", JSON.stringify(songs), {
+        await redisClient.set("songs", JSON.stringify(songs), {
           EX: CACHE_EXPIRY,
         });
       }

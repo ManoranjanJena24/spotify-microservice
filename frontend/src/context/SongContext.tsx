@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {createContext , useCallback, useContext , useEffect ,useState, type ReactNode} from 'react'
+import Album from '../pages/Album';
 
 const server = "http://localhost:8000"
 
@@ -23,19 +24,21 @@ export interface Album{
 
 }
 
-interface SongContextType{
-    songs:Song[];
-    song:Song | null;
-    isPlaying:boolean,
-    setIsPlaying:(value: boolean)=> void ,
-    loading:boolean,
-    selectedSong: string | null,
-    setSelectedSong:(id:string)=> void;
-    albums:Album[];
-    fetchSingleSong:()=>Promise<void>;
-    nextSong:void;
-   prevSong:void;
-
+interface SongContextType {
+  songs: Song[];
+  song: Song | null;
+  isPlaying: boolean;
+  setIsPlaying: (value: boolean) => void;
+  loading: boolean;
+  selectedSong: string | null;
+  setSelectedSong: (id: string) => void;
+  albums: Album[];
+  fetchSingleSong: () => Promise<void>;
+  nextSong: void;
+  prevSong: void;
+  albumSong: Song[];
+  albumData: Album | null;
+  fetchAlbumSongs:(id:string)=> Promise<void>
 }
 
 
@@ -117,13 +120,37 @@ const prevSong =useCallback(()=>{
     }
 },[index , songs])
 
+
+const [albumSong , setAlbumSong] =useState<Song[]>([])
+const [albumData, setAlbumData] = useState<Album | null>(null)
+
+const fetchAlbumSongs = useCallback(async(id:string)=>{
+    setLoading(true)
+    try {
+
+        const {data} = await axios.get<{songs:Song[]; album:Album}>(`${server}/api/v1/album/${id}`)
+        setAlbumData(data.album)
+        setAlbumSong(data.songs)
+
+        
+    } catch (error) {
+        console.log(error)
+        
+    }finally{
+        setLoading(false)
+    }
+
+},[])
+
+
+
     useEffect(()=>{
         fetchSongs()
         fetchAlbums()
 
     },[])
 
-    return <SongContext.Provider value={{songs , selectedSong , setSelectedSong , isPlaying, setIsPlaying , loading ,albums , fetchSingleSong ,song ,nextSong ,prevSong}}>{children}</SongContext.Provider>
+    return <SongContext.Provider value={{songs , selectedSong , setSelectedSong , isPlaying, setIsPlaying , loading ,albums , fetchSingleSong ,song ,nextSong ,prevSong , fetchAlbumSongs , albumData ,albumSong}}>{children}</SongContext.Provider>
 
 }
 
