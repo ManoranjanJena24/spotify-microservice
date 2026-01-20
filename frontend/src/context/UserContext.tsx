@@ -89,23 +89,20 @@ interface UserContextType {
   loading: boolean;
   setUser: React.Dispatch<React.SetStateAction<User | null>>; // Added this
   setIsAuth: React.Dispatch<React.SetStateAction<boolean>>; // Added this
-  btnLoading:boolean;
-  loginUser:(
-    email:string,
-    password:string,
-    navigate:(path: string)=> void,
-  )=> Promise<void>;
-  registerUser:(
-    name:string,
-    email:string,
-    password:string,
-    navigate:(path: string)=> void,
-  )=> Promise<void>;
-  logoutUser:()=> Promise <void>  ; 
-
-
-
-
+  btnLoading: boolean;
+  loginUser: (
+    email: string,
+    password: string,
+    navigate: (path: string) => void,
+  ) => Promise<void>;
+  registerUser: (
+    name: string,
+    email: string,
+    password: string,
+    navigate: (path: string) => void,
+  ) => Promise<void>;
+  addToPlaylist:(id:string)=> void ;
+  logoutUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -206,6 +203,25 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   }
 
+
+  async function addToPlaylist(id:string){
+    try {
+        const {data} = await axios.post(
+            `${server}/api/v1/song/${id}`,{},
+            {
+                headers:{
+                    token:localStorage.getItem("token")
+                }
+            }
+        )
+        toast.success(data.message)
+        fetchUser()
+        
+    } catch (error :any) {
+      toast.error(error.response?.data?.message || "An error Occures")  
+    }
+  }
+
   useEffect(() => {
     fetchUser();
   }, []);
@@ -221,6 +237,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         btnLoading,
         loginUser,
         registerUser,
+        addToPlaylist,
         logoutUser,
       }}
     >
