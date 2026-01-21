@@ -1,61 +1,58 @@
-import { useParams } from 'react-router-dom';
-import Layout from '../components/Layout';
-import { useSongData } from '../context/SongContext';
-import { useEffect } from 'react';
-import Loading from '../components/Loading';
-import { FaBookmark, FaPlay } from 'react-icons/fa';
-import { useUserData } from '../context/UserContext';
+import { useEffect, useState } from "react";
+import Layout from "../components/Layout"
+import { useSongData, type Song } from "../context/SongContext";
+import { useUserData } from "../context/UserContext";
+import { FaBookmark, FaPlay } from "react-icons/fa";
+import Loading from "../components/Loading";
 
-const Album = () => {
-  // 1. Destructure hooks at the top level of the component
-  const {
-    fetchAlbumSongs,
-    albumSong,
-    albumData,
-    setIsPlaying,
-    setSelectedSong,
-    loading,
-  } = useSongData();
+const PlayList = () => {
+  const { songs, setIsPlaying, setSelectedSong, loading } = useSongData();
 
+  const { user, addToPlaylist } = useUserData();
 
-  const {isAuth , addToPlaylist} = useUserData()
-
-  const params = useParams<{id: string}>();
-  console.log("parrrraaammmssss",params.id)
-
-  // 2. Trigger fetch when ID changes
+  const [myPlayList, setMyPlayList] = useState<Song[]>([]);
   useEffect(() => {
-    if (params.id) {
-      fetchAlbumSongs(params.id);
+    // Only run logic if BOTH songs and user data exist
+    if (songs && songs.length > 0 && user && user.playlist) {
+      const filteredSongs = songs.filter((song) => {
+        // Convert everything to string to ensure a perfect match
+        return user.playlist.some(
+          (id) => String(id) === String(song._id || song.id),
+        );
+      });
+      setMyPlayList(filteredSongs);
+    } else {
+      setMyPlayList([]);
     }
-  }, [params.id, fetchAlbumSongs]); // Added fetchAlbumsongs to dependency array
+  }, [songs, user]); // Run whenever songs or user state updates
+//   useEffect(() => {
+//     if (songs && user?.playlist) {
+//       const filteredSongs = songs.filter((song) =>
+//         user.playlist.includes(song.id.toString()),
+//       );
 
- 
+//       setMyPlayList(filteredSongs);
+//     }
+//   }, [songs, user]);
 
   return (
     <div>
       <Layout>
-        {albumData && (
+        {myPlayList && (
           <>
             {loading ? (
               <Loading />
             ) : (
               <>
                 <div className="mt-10 flex gap-8 flex-col md:flex-row md:items-center">
-                  {albumData.thumbnail && (
-                    <img
-                      src={albumData.thumbnail}
-                      className="w-48 rounded"
-                      alt=""
-                    />
-                  )}
+                  <img src={"/download.jpg"} className="w-48 rounded" alt="" />
 
                   <div className="flex flex-col">
                     <p>Playlist</p>
                     <h2 className="text-3xl font-bold mb-4 md:text-5xl">
-                      {albumData.title}
+                      {user?.name} Playlist
                     </h2>
-                    <h4>{albumData.description}</h4>
+                    <h4>Your Favourite Songs </h4>
                     <p className="mt-1">
                       <img
                         src="/logo.png"
@@ -75,8 +72,8 @@ const Album = () => {
                 </div>
 
                 <hr />
-                {albumSong &&
-                  albumSong.map((song, index) => {
+                {myPlayList &&
+                  myPlayList.map((song, index) => {
                     return (
                       <div
                         className="grid grid-cols-3 sm:grid-cols-4 mt-10 mb-4 pl-2 text-[#a7a7a7] hover:bg-[#ffffff2b] cursor-pointer "
@@ -97,14 +94,13 @@ const Album = () => {
                           {song.description.slice(0, 30)}...
                         </p>
                         <p className="flex justify-center items-center gap-5">
-                          {isAuth && (
-                            <button
-                              className="text-[15px] text-center"
-                              onClick={() => addToPlaylist(song.id)}
-                            >
-                              <FaBookmark />
-                            </button>
-                          )}
+                          <button
+                            className="text-[15px] text-center"
+                            onClick={() => addToPlaylist(song.id)}
+                          >
+                            <FaBookmark />
+                          </button>
+
                           <button
                             className="text-[15px] text-center"
                             onClick={() => {
@@ -125,6 +121,6 @@ const Album = () => {
       </Layout>
     </div>
   );
-};
+}
 
-export default Album;
+export default PlayList

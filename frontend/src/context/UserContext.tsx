@@ -116,109 +116,175 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
-  const [btnLoading, setBtnLoading] = useState(false)
+  const [btnLoading, setBtnLoading] = useState(false);
 
-  async function loginUser(email:string ,password:string , navigate:(path:string)=> void){
-    setBtnLoading(true)
+  async function loginUser(
+    email: string,
+    password: string,
+    navigate: (path: string) => void,
+  ) {
+    setBtnLoading(true);
     try {
-        const {data} = await axios.post(`${server}/api/v1/user/login`,{
-            email , password
-        })
+      const { data } = await axios.post(`${server}/api/v1/user/login`, {
+        email,
+        password,
+      });
 
-        toast.success(data.message)
-        localStorage.setItem("token",data.token)
-        setUser(data.user)
-        setIsAuth(true)
-        setBtnLoading(false)
-        navigate("/")
-        
-    } catch (error: any ) {
-        console.log(error)
-        toast.error(error.response?.data?.message || "An error occured")
-        setBtnLoading(false)
+      toast.success(data.message);
+      localStorage.setItem("token", data.token);
+      setUser(data.user);
+      setIsAuth(true);
+      setBtnLoading(false);
+      navigate("/");
+    } catch (error: any) {
+      console.log(error);
+      toast.error(error.response?.data?.message || "An error occured");
+      setBtnLoading(false);
     }
   }
 
+  async function registerUser(
+    name: string,
+    email: string,
+    password: string,
+    navigate: (path: string) => void,
+  ) {
+    setBtnLoading(true);
+    try {
+      const { data } = await axios.post(`${server}/api/v1/user/register`, {
+        name,
+        email,
+        password,
+      });
 
-
-
-
-    async function registerUser(
-      name:string,
-      email: string,
-      password: string,
-      navigate: (path: string) => void,
-    ) {
-      setBtnLoading(true);
-      try {
-        const { data } = await axios.post(`${server}/api/v1/user/register`, {
-            name,
-          email,
-          password,
-        });
-
-        toast.success(data.message);
-        localStorage.setItem("token", data.token);
-        setUser(data.user);
-        setIsAuth(true);
-        setBtnLoading(false);
-        navigate("/");
-      } catch (error: any) {
-        console.log(error);
-        toast.error(error.response?.data?.message || "An error occured");
-        setBtnLoading(false);
-      }
+      toast.success(data.message);
+      localStorage.setItem("token", data.token);
+      setUser(data.user);
+      setIsAuth(true);
+      setBtnLoading(false);
+      navigate("/");
+    } catch (error: any) {
+      console.log(error);
+      toast.error(error.response?.data?.message || "An error occured");
+      setBtnLoading(false);
     }
+  }
 
+  // async function fetchUser() {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) {
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     const { data } = await axios.get(`${server}/api/v1/user/me`, {
+  //       headers: {
+  //         token: token,
+  //       },
+  //     });
+
+  //     setUser(data.user); // Note: verify if your API returns {user: ...} or just the object
+  //     setIsAuth(true);
+  //     setLoading(false);
+  //   } catch (error) {
+  //     console.log(error);
+  //     setIsAuth(false);
+  //     setLoading(false);
+  //   }
+  // }
+
+  // Frontend: UserContext.tsx
   async function fetchUser() {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         setLoading(false);
+        setIsAuth(false);
         return;
       }
 
       const { data } = await axios.get(`${server}/api/v1/user/me`, {
-        headers: {
-          token: token,
-        },
+        headers: { token },
       });
 
-      setUser(data.user); // Note: verify if your API returns {user: ...} or just the object
+      // CHANGE THIS LINE:
+      // If your backend sends the user object directly, use 'data'
+      setUser(data.user || data);
+
       setIsAuth(true);
-      setLoading(false);
     } catch (error) {
-      console.log(error);
+      console.error("Fetch user error:", error);
       setIsAuth(false);
+      setUser(null);
+    } finally {
       setLoading(false);
     }
   }
 
-  async function logoutUser(){
-    localStorage.clear()
+  async function logoutUser() {
+    localStorage.clear();
     setUser(null);
-    setIsAuth(false)
+    setIsAuth(false);
 
-    toast.success("User Logged Out")
-
+    toast.success("User Logged Out");
   }
 
+  // async function addToPlaylist(id:string){
+  //   try {
+  //       const {data} = await axios.post(
+  //           `${server}/api/v1/song/${id}`,{},
+  //           {
+  //               headers:{
+  //                   token:localStorage.getItem("token")
+  //               }
+  //           }
+  //       )
+  //       toast.success(data.message)
+  //       fetchUser()
 
-  async function addToPlaylist(id:string){
+  //   } catch (error :any) {
+  //     toast.error(error.response?.data?.message || "An error Occures")
+  //   }
+  // }
+
+  async function addToPlaylist(id: string) {
     try {
-        const {data} = await axios.post(
-            `${server}/api/v1/song/${id}`,{},
-            {
-                headers:{
-                    token:localStorage.getItem("token")
-                }
-            }
-        )
-        toast.success(data.message)
-        fetchUser()
-        
-    } catch (error :any) {
-      toast.error(error.response?.data?.message || "An error Occures")  
+      const { data } = await axios.post(
+        `${server}/api/v1/song/${id}`,
+        {},
+        {
+          headers: {
+            token: localStorage.getItem("token"),
+          },
+        },
+      );
+
+      toast.success(data.message);
+
+      // FIX: Update local user state immediately so React sees the change
+      setUser((prevUser) => {
+        if (!prevUser) return null;
+
+        const isIncluded = prevUser.playlist.includes(id);
+        let updatedPlaylist;
+
+        if (isIncluded) {
+          // If it was already there, remove it (toggle behavior)
+          updatedPlaylist = prevUser.playlist.filter((songId) => songId !== id);
+        } else {
+          // Add the new song ID to a NEW array
+          updatedPlaylist = [...prevUser.playlist, id];
+        }
+
+        return {
+          ...prevUser,
+          playlist: updatedPlaylist,
+        };
+      });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "An error occurred");
     }
   }
 
@@ -245,7 +311,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       <Toaster />
     </UserContext.Provider>
   );
-};
+};;
 
 export const useUserData = (): UserContextType => {
   const context = useContext(UserContext);
