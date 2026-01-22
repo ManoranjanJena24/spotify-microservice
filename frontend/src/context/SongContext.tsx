@@ -38,7 +38,9 @@ interface SongContextType {
   prevSong: void;
   albumSong: Song[];
   albumData: Album | null;
-  fetchAlbumSongs:(id:string)=> Promise<void>
+  fetchAlbumSongs:(id:string)=> Promise<void>;
+  fetchSongs:()=>Promise<void>;
+  fetchAlbums:()=>Promise<void>;
 }
 
 
@@ -150,7 +152,30 @@ const fetchAlbumSongs = useCallback(async(id:string)=>{
 
     },[])
 
-    return <SongContext.Provider value={{songs , selectedSong , setSelectedSong , isPlaying, setIsPlaying , loading ,albums , fetchSingleSong ,song ,nextSong ,prevSong , fetchAlbumSongs , albumData ,albumSong}}>{children}</SongContext.Provider>
+    return (
+      <SongContext.Provider
+        value={{
+          songs,
+          selectedSong,
+          setSelectedSong,
+          isPlaying,
+          setIsPlaying,
+          loading,
+          albums,
+          fetchSingleSong,
+          song,
+          nextSong,
+          prevSong,
+          fetchAlbumSongs,
+          albumData,
+          albumSong,
+          fetchSongs,
+          fetchAlbums,
+        }}
+      >
+        {children}
+      </SongContext.Provider>
+    );
 
 }
 
